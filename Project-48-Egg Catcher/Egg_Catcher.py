@@ -6,22 +6,25 @@ canvas_width = 800
 canvas_height = 400
 
 root = Tk()
+root.title("Egg Catcher Game 🎮")
 c = Canvas(root, width=canvas_width, height=canvas_height,
            background="deep sky blue")
 c.create_rectangle(-5, canvas_height-100, canvas_width+5,
                    canvas_height+5, fill="sea green", width=0)
-c.create_oval(-80, -80, 120, 120, fill='orange', width=0)
+c.create_oval(-80, -80, 120, 120, fill='orange', width=0)  # sun
 c.pack()
 
-print("KoKo")
+# Egg + Game Setup
 color_cycle = cycle(["light blue", "light green",
-                    "light pink", "light yellow", "light cyan"])
+                     "light pink", "light yellow", "light cyan"])
 egg_width = 45
 egg_height = 55
 egg_score = 10
 egg_speed = 500
 egg_interval = 4000
 difficulty = 0.95
+
+# Catcher Setup
 catcher_color = "blue"
 catcher_width = 100
 catcher_height = 100
@@ -32,13 +35,15 @@ catcher_starty2 = catcher_starty + catcher_height
 
 catcher = c.create_arc(catcher_startx, catcher_starty, catcher_startx2, catcher_starty2,
                        start=200, extent=140, style="arc", outline=catcher_color, width=3)
+
+# Fonts
 game_font = font.nametofont("TkFixedFont")
 game_font.config(size=18)
 
-
+# Score + Lives
 score = 0
 score_text = c.create_text(
-    10, 10, anchor="nw", font=game_font, fill="darkblue", text="By KoKo : Score: " + str(score))
+    10, 10, anchor="nw", font=game_font, fill="darkblue", text="Score: " + str(score))
 
 lives_remaining = 3
 lives_text = c.create_text(canvas_width-10, 10, anchor="ne", font=game_font,
@@ -48,7 +53,7 @@ eggs = []
 
 
 def create_egg():
-    x = randrange(10, 740)
+    x = randrange(10, canvas_width - egg_width - 10)
     y = 40
     new_egg = c.create_oval(x, y, x+egg_width, y+egg_height,
                             fill=next(color_cycle), width=0)
@@ -70,8 +75,10 @@ def egg_dropped(egg):
     c.delete(egg)
     lose_a_life()
     if lives_remaining == 0:
-        messagebox.showinfo("Game Over!", "Final Score: " + str(score))
-        root.destroy()
+        if messagebox.askyesno("Game Over!", f"Final Score: {score}\n\nPlay Again?"):
+            restart_game()
+        else:
+            root.destroy()
 
 
 def lose_a_life():
@@ -82,7 +89,7 @@ def lose_a_life():
 
 def check_catch():
     (catcherx, catchery, catcherx2, catchery2) = c.coords(catcher)
-    for egg in eggs:
+    for egg in eggs[:]:
         (eggx, eggy, eggx2, eggy2) = c.coords(egg)
         if catcherx < eggx and eggx2 < catcherx2 and catchery2 - eggy2 < 40:
             eggs.remove(egg)
@@ -111,9 +118,25 @@ def move_right(event):
         c.move(catcher, 20, 0)
 
 
+def restart_game():
+    global score, lives_remaining, eggs, egg_speed, egg_interval
+    score = 0
+    lives_remaining = 3
+    egg_speed = 500
+    egg_interval = 4000
+    c.itemconfigure(score_text, text="Score: 0")
+    c.itemconfigure(lives_text, text="Lives: 3")
+    for egg in eggs:
+        c.delete(egg)
+    eggs = []
+
+
+# Key Bindings
 c.bind("<Left>", move_left)
 c.bind("<Right>", move_right)
 c.focus_set()
+
+# Start Game
 root.after(1000, create_egg)
 root.after(1000, move_eggs)
 root.after(1000, check_catch)
